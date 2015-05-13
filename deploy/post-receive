@@ -1,0 +1,46 @@
+# This is support script to enable you to deploy your code to the staging/production environment safely using git. 
+# Concept of this workflow is, the production/staging server have repository to receive the code from developer.
+# This script will be installed in the hooks/ directory in git bare repository on the staging/production server.
+# (To create bere repositiory, you can clone the git repository from your origin repository with --bare option)
+#
+# Workflow is, 
+# 1. Script will check the temporary space, and remove it if it exists.
+# 2. Create clone repository from bare repository.
+# 3. Script will copy latest codes to the web area with rsync. Using --exclude-from is important to protect
+#    overwrite files which you don't want to overwrite for example configuration files.
+#
+# Client's setup
+# Client who is allowed to push the code to the staging/production environment have to add bare repository on the server
+# as a remote repository  
+# > remote add REPOSITORY_URL REMOTE_NAME
+# then push your latest code like a
+# > git push REMOTE_NAME master.
+
+
+################  SETUP  ##################
+WORK_DIR=/var/www/repos
+BARE_REPOSITORY_PATH=~/git/servicename
+REPOSITORY_NAME=servicename
+RSYNC_EXCLUDE_FILEPATH=/var/www/repos/service-rsync.exclude
+DEPLOY_TARGET_PATH=/var/www/html
+# BRANCH=deploy
+
+############### PRE PROCESS ###############
+
+
+############### MAIN CODE #################
+if [ -e ${WORK_DIR}/${REPOSITORY_NAME}; then
+	rm -rf ${WORK_DIR}/${REPOSITORY_NAME}
+fi
+
+cd ${WORK_DIR}
+git clone ${BARE_REPOSITORY_NAME}
+# If you want to clone from specific branch, use below instead of above.
+# git clone -b ${BRANCH} ${BARE_REPOSITORY_NAME}
+
+rsync -av --exclude-from=${RSYNC_EXCLUDE_FILEPATH} ${WORK_DIR}/${REPOSITORY_NAME} ${DEPLOY_TARGET}
+
+
+############## AFTER PROCESS ##############
+
+# END
